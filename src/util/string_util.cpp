@@ -107,3 +107,40 @@ int parseHost(const char* _pszHost, HostInfo* _pHostInfo) {
 
     return 0;
 }
+
+int copyUntil(const char* _pszSrc, char* _pDst, size_t _uDstSz, char _cUntil) {
+    int nLastDstIndex = (int)_uDstSz - 2;
+    if (nLastDstIndex < 0) {
+        return -1;
+    }
+
+    size_t uSrcLen = strlen(_pszSrc);
+    for (size_t i = 0; i < uSrcLen; i++) {
+        if (i > size_t(nLastDstIndex)) {
+            return -1;
+        }
+        if (_pszSrc[i] == _cUntil) {
+            _pDst[i] = '\0';
+            return 0;
+        }
+        _pDst[i] = _pszSrc[i];
+    }
+
+    // Until not found
+    return -1;
+}
+
+const char* skipCharactors(const char* _pszSrc, char _cSkip) {
+    size_t uSrcLen = strlen(_pszSrc);
+    size_t uOffset = 0;
+
+    for (size_t i = 0; i < uSrcLen; i++) {
+        if (_pszSrc[i] == _cSkip) {
+            uOffset++;
+        } else {
+            break;
+        }
+    }
+
+    return _pszSrc + uOffset;
+}

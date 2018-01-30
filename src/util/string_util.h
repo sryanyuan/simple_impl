@@ -18,4 +18,7 @@ void printfln(const char* fmt, ...);
 // Check if a string has prefix string using low case
 int hasPrefixCi(const char* _pszSrc, const char* _pszPrefix);
 
+int copyUntil(const char* _pszSrc, char* _pDst, size_t _uDstSz, char _cUntil);
+const char* skipCharactors(const char* _pszSrc, char _cSkip);
+
 #endif

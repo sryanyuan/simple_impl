@@ -45,6 +45,9 @@
     <ClCompile Include="src\http_client\http_request_header.cpp">
       <Filter>源文件\http_client</Filter>
     </ClCompile>
+    <ClCompile Include="src\http_client\http_client_test.cpp">
+      <Filter>源文件\http_client</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\http_client\http_client.h">
@@ -57,6 +60,9 @@
       <Filter>头文件\util</Filter>
     </ClInclude>
     <ClInclude Include="src\http_client\http_request_header.h">
+      <Filter>头文件\http_client</Filter>
+    </ClInclude>
+    <ClInclude Include="src\http_client\http_client_test.h">
       <Filter>头文件\http_client</Filter>
     </ClInclude>
   </ItemGroup>

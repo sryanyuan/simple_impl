@@ -79,6 +79,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\http_client\http_client.cpp" />
+    <ClCompile Include="src\http_client\http_client_test.cpp" />
     <ClCompile Include="src\http_client\http_request_header.cpp" />
     <ClCompile Include="src\simple_impl.cpp" />
     <ClCompile Include="src\util\socket_util.cpp" />
@@ -86,6 +87,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\http_client\http_client.h" />
+    <ClInclude Include="src\http_client\http_client_test.h" />
     <ClInclude Include="src\http_client\http_request_header.h" />
     <ClInclude Include="src\util\socket_util.h" />
     <ClInclude Include="src\util\string_util.h" />

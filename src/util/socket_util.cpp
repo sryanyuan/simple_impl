@@ -42,6 +42,7 @@ int SocketReadLine(int _nFD, char* _pBuf, size_t _uSz) {
     size_t i = 0;
     int nRet = 0;
     char cRecv = 0;
+    bool bError = false;
 
     for (i = 0; i < _uSz - 1 - 2;) {
         nRet = recv(_nFD, &cRecv, 1, 0);
@@ -49,7 +50,10 @@ int SocketReadLine(int _nFD, char* _pBuf, size_t _uSz) {
             // Error occurs
             if (nRet == 0) {
                 // Connection closed
+                return 1;
             }
+            int nErrCode = WSAGetLastError();
+            bError = true;
             break;
         }
 
@@ -58,6 +62,7 @@ int SocketReadLine(int _nFD, char* _pBuf, size_t _uSz) {
             nRet = recv(_nFD, &cRecv, 1, MSG_PEEK);
             if (nRet <= 0 || cRecv != '\n') {
                 // Error
+                bError = true;
                 break;
             }
 
@@ -74,6 +79,10 @@ int SocketReadLine(int _nFD, char* _pBuf, size_t _uSz) {
     }
 
     _pBuf[i] = '\0';
+
+    if (bError) {
+        return 0;
+    }
 
     return i;
 }

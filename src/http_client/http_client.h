@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <map>
 #include <string>
+#include <functional>
+#include <WinSock2.h>
 
 const int MinAllocateSize = 1024 * 4;
 
@@ -55,9 +57,62 @@ public:
                 m_bBad = true;
                 return -1;
             }
+            m_uLen = uAllocSize;
         }
-        memcpy(m_pBuffer, _pData, _uSize);
+        memcpy(m_pBuffer + m_uWPtr, _pData, _uSize);
+        m_uWPtr += _uSize;
         return 0;
+    }
+
+    int ReadFromFD(int _nFD, size_t _uSize) {
+        if (m_bBad) {
+            return -1;
+        }
+        size_t uAvailableSize = m_uLen - m_uWPtr;
+        if (uAvailableSize < _uSize) {
+            // Reallocate memory
+            size_t uAllocSize = (m_uLen + _uSize) * 2;
+            m_pBuffer = (char*)realloc(m_pBuffer, uAllocSize);
+            if (NULL == m_pBuffer) {
+                m_bBad = true;
+                return -1;
+            }
+            m_uLen = uAllocSize;
+        }
+        int nLeftSz = (int)_uSize;
+        while (nLeftSz > 0) {
+            int nRecv = recv(_nFD, m_pBuffer + m_uWPtr, nLeftSz, 0);
+            if (0 == nRecv) {
+                // Remote connection is closed
+                m_bBad = true;
+                return -1;
+            }
+            if (nRecv < 0) {
+                // Error
+                m_bBad = true;
+                return -1;
+            }
+            nLeftSz -= nRecv;
+            m_uWPtr += size_t(nRecv);
+        }
+
+        return 0;
+    }
+
+    int TerminateString() {
+        return Append("\0", 1);
+    }
+
+    const char* GetBuffer() {
+        return m_pBuffer;
+    }
+
+    size_t GetLength() {
+        return m_uWPtr;
+    }
+
+    size_t GetCapacity() {
+        return m_uLen;
     }
 
     inline bool IsBad()     {return m_bBad;}
@@ -74,6 +129,7 @@ typedef std::map<std::string, int> KeepAliveSocketMap;
 class HTTPClient {
 public:
     enum {
+        HTTPVersionNone,
         HTTPVersion1_1,
         HTTPVersion1_0,
         HTTPVersionTotal,
@@ -88,11 +144,34 @@ public:
 public:
     class Response {
     public:
+        typedef std::function<int(Response*, const char*)> FnHeaderParser;
+        typedef std::map<std::string, FnHeaderParser> HeaderParserMap;
+        typedef std::map<std::string, std::string> HeaderKeyValue;
+
+    public:
         Response() {
+            m_nStatusCode = 0;
             m_bSuccess = false;
             m_nHeaderConnection = ConnectionNone;
-            m_nHTTPVersion = HTTPVersion1_1;
+            m_nHTTPVersion = HTTPVersionNone;
         }
+
+    public:
+        int ParseHeaderRaw(const char* _pszLine);
+        void Print();
+        void Reset() {
+            m_bSuccess = false;
+            m_nHeaderConnection = ConnectionNone;
+            m_nHTTPVersion = HTTPVersionNone;
+            m_body.Reset(0);
+            m_xHeaderValue.clear();
+            m_strStatusMsg.clear();
+            m_nStatusCode = 0;
+            m_strContentType.clear();
+        }
+
+    private:
+
 
     public:
         bool m_bSuccess;
@@ -100,7 +179,17 @@ public:
         std::string m_strStatusMsg;
         int m_nHTTPVersion;
         int m_nHeaderConnection;
+        std::string m_strContentType;
         ResponseBody m_body;
+        HeaderKeyValue m_xHeaderValue;
+
+    private:
+        static void InitializeHeaderParsers();
+        static int ParseHeaderConnection(Response* _pRsp, const char* _pszValue);
+        static int ParseHeaderContentType(Response* _pRsp, const char* _pszValue);
+
+    private:
+        static HeaderParserMap m_mapHeaderParser;
     };
 
 public:
