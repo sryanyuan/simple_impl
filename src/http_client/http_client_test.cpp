@@ -14,8 +14,10 @@ int http_client_test_main(int argc, char* argv[]) {
     HTTPClient::Response rsp;
 
     for (int i = 0; i < 5; i++) {
-        client.Get("http://www.mydrivers.com", "", &rsp);
+        printfln("***********REQUEST %d*************", i);
+        client.Get("http://gocode.cc", "/1", &rsp);
         rsp.Print();
+        printfln("************************************\r\n");
 
         Sleep(i * 20 * 1000);
     }

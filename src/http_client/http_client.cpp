@@ -375,7 +375,7 @@ int HTTPClient::internalGet(int _nFD, const HostInfo* _pInfo, const char* _pszPa
         return nRet;
     }
     // Write accept
-    if ((nRet = header.WriteString("Accept", "text/html")) != 0) {
+    if ((nRet = header.WriteString("Accept", "*/*")) != 0) {
         return nRet;
     }
     // CRLF end with empty line
@@ -388,14 +388,15 @@ int HTTPClient::internalGet(int _nFD, const HostInfo* _pInfo, const char* _pszPa
         return nRet;
     }
 
-    // Send header
-    nRet = send(_nFD, header.GetBuffer(), header.GetLength(), 0);
+    // Send header, skip the terminate null
+    nRet = send(_nFD, header.GetBuffer(), header.GetLength() - 1, 0);
     if (nRet < 0) {
+        // If send failed, it normally because rst
+        // Send can't detected remote peer close the socket
+        // In this situation, client socket status is CLOSE_WAIT,
+        // but can still send data
+        int nErrCode = WSAGetLastError();
         return -1;
-    }
-    if (nRet == 0) {
-        // Socket disconnected, if using keep-alive socket, check the socket has closed by server
-        return 1;
     }
     printfln("send %d bytes for request %s, header content:\r\n%s", nRet, pszPath, header.GetBuffer());
 
@@ -477,9 +478,10 @@ int HTTPClient::readResponse(int _nFD, Response* _pRsp) {
         }
     }
 
+    Response::HeaderKeyValue::const_iterator it = _pRsp->m_xHeaderValue.end();
     // Parse body
     int nContentLength = 0;
-    Response::HeaderKeyValue::const_iterator it = _pRsp->m_xHeaderValue.find("content-length");
+    it = _pRsp->m_xHeaderValue.find("content-length");
     if (it != _pRsp->m_xHeaderValue.end()) {
         nContentLength = atoi(it->second.c_str());
     }
